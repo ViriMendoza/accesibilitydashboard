@@ -103,7 +103,10 @@ export default function App() {
         onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       />
       <main id="main" ref={mainRef} tabIndex={-1} className="main">
-        {content}
+        {/* La key reinicia la animación de entrada en cada cambio de vista. */}
+        <div key={`${route.view}/${route.id ?? ''}`} className="view">
+          {content}
+        </div>
       </main>
       <div className="visually-hidden" role="status" aria-live="polite">
         {message}

@@ -1,5 +1,6 @@
 import { CRITERIA, PRINCIPLES, computeStats, criteriaFor } from '../data/criteria'
 import ScoreRing from './ScoreRing'
+import ProgressBar, { AnimatedNumber } from './ProgressBar'
 
 export default function Overview({ projects, onOpenProject }) {
   const stats = projects.map((p) => ({ project: p, ...computeStats(p) }))
@@ -39,7 +40,7 @@ export default function Overview({ projects, onOpenProject }) {
       </header>
 
       <section aria-label="Indicadores" className="kpi-grid">
-        <Kpi label="Puntuación promedio" value={`${avgScore}`} suffix="/100" />
+        <Kpi label="Puntuación promedio" value={avgScore} suffix="/100" />
         <Kpi label="Proyectos" value={projects.length} />
         <Kpi label="Incumplimientos abiertos" value={totalFails} tone={totalFails ? 'bad' : undefined} />
         <Kpi label="Criterios por evaluar" value={totalPending} />
@@ -77,11 +78,11 @@ export default function Overview({ projects, onOpenProject }) {
               <li key={pr.id}>
                 <div className="bar-head">
                   <span>{pr.name}</span>
-                  <span className="tabular">{pr.pct}%</span>
+                  <span className="tabular">
+                    <AnimatedNumber value={pr.pct} />%
+                  </span>
                 </div>
-                <div className="bar" role="presentation">
-                  <div className="bar-fill" style={{ width: `${pr.pct}%` }} />
-                </div>
+                <ProgressBar value={pr.pct} />
               </li>
             ))}
           </ul>
@@ -118,7 +119,7 @@ function Kpi({ label, value, suffix, tone }) {
     <div className="card kpi">
       <span className="muted small">{label}</span>
       <span className={`kpi-value ${tone ? `tone-${tone}` : ''}`}>
-        {value}
+        <AnimatedNumber value={value} />
         {suffix && <span className="kpi-suffix">{suffix}</span>}
       </span>
     </div>

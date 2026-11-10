@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { PRINCIPLES, STATUSES, computeStats, criteriaFor } from '../data/criteria'
 import ScoreRing from './ScoreRing'
+import Scanner from './Scanner'
 
 const FILTERS = [{ id: 'all', label: 'Todos' }, ...STATUSES]
 
@@ -8,6 +9,7 @@ export default function ProjectDetail({ project, onBack, onUpdate, onDelete, ann
   const [filter, setFilter] = useState('all')
   const stats = computeStats(project)
   const criteria = criteriaFor(project)
+  const scan = project.scans?.[0]
 
   function setStatus(criterion, status) {
     onUpdate({ ...project, checks: { ...project.checks, [criterion.id]: status } })
@@ -24,6 +26,14 @@ export default function ProjectDetail({ project, onBack, onUpdate, onDelete, ann
         return `- [${status}] ${c.id} ${c.title} (${c.level})`
       }),
       '',
+      ...(scan
+        ? [
+            `## Escaneo automático (axe-core) · ${new Date(scan.date).toLocaleString('es-MX')}`,
+            `Origen: ${scan.source}`,
+            ...scan.violations.map((v) => `- [${v.impact}] ${v.help} (${v.id}, WCAG ${v.criteria.join(', ') || '—'}) · ${v.count} elementos`),
+            '',
+          ]
+        : []),
       project.notes ? `## Notas\n${project.notes}` : '',
     ]
     const blob = new Blob([lines.join('\n')], { type: 'text/markdown' })
@@ -58,6 +68,8 @@ export default function ProjectDetail({ project, onBack, onUpdate, onDelete, ann
           </button>
         </div>
       </header>
+
+      <Scanner project={project} onUpdate={onUpdate} announce={announce} />
 
       <div className="segmented" role="group" aria-label="Filtrar criterios por estado">
         {FILTERS.map((f) => (

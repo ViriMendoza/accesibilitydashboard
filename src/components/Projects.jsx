@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { computeStats } from '../data/criteria'
 import ScoreRing from './ScoreRing'
+import ProgressBar, { AnimatedNumber } from './ProgressBar'
 
 export default function Projects({ projects, onOpenProject, onCreate }) {
   const dialogRef = useRef(null)
@@ -49,9 +50,7 @@ export default function Projects({ projects, onOpenProject, onCreate }) {
                     <Stat label="No cumple" value={s.fail} tone="bad" />
                     <Stat label="Pendiente" value={s.pending} />
                   </span>
-                  <span className="bar" aria-hidden="true">
-                    <span className="bar-fill" style={{ width: `${s.progress}%` }} />
-                  </span>
+                  <ProgressBar value={s.progress} />
                   <span className="muted small">
                     {s.progress}% evaluado · Meta WCAG {p.target} · Actualizado {p.updatedAt}
                   </span>
@@ -97,7 +96,9 @@ export default function Projects({ projects, onOpenProject, onCreate }) {
 function Stat({ label, value, tone }) {
   return (
     <span className="stat">
-      <span className={`stat-value ${tone ? `tone-${tone}` : ''}`}>{value}</span>
+      <span className={`stat-value ${tone ? `tone-${tone}` : ''}`}>
+        <AnimatedNumber value={value} />
+      </span>
       <span className="muted small">{label}</span>
     </span>
   )
