@@ -8,7 +8,7 @@ const IMPACT = {
   minor: { label: 'Menor', order: 3 },
 }
 
-const MAX_SCANS = 10
+const MAX_SCANS = 50
 
 export default function Scanner({ project, onUpdate, announce }) {
   const [mode, setMode] = useState('url')

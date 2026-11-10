@@ -1,6 +1,7 @@
 import { CRITERIA, PRINCIPLES, computeStats, criteriaFor } from '../data/criteria'
 import ScoreRing from './ScoreRing'
 import ProgressBar, { AnimatedNumber } from './ProgressBar'
+import { dueStatus } from '../utils/date'
 
 export default function Overview({ projects, onOpenProject }) {
   const stats = projects.map((p) => ({ project: p, ...computeStats(p) }))
@@ -16,6 +17,17 @@ export default function Overview({ projects, onOpenProject }) {
     .filter((f) => f.count > 0)
     .sort((a, b) => b.count - a.count || a.criterion.level.localeCompare(b.criterion.level))
     .slice(0, 5)
+
+  // Incumplimientos abiertos: primero los que tienen fecha (la más próxima arriba), luego los que no.
+  const openIssues = projects
+    .flatMap((p) =>
+      criteriaFor(p)
+        .filter((c) => p.checks[c.id] === 'fail')
+        .map((c) => ({ project: p, criterion: c, ...p.issues[c.id] })),
+    )
+    .sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'))
+  const overdue = openIssues.filter((i) => dueStatus(i.due)?.tone === 'bad').length
+  const unassigned = openIssues.filter((i) => !i.owner).length
 
   const byPrinciple = PRINCIPLES.map((pr) => {
     let pass = 0
@@ -88,6 +100,57 @@ export default function Overview({ projects, onOpenProject }) {
           </ul>
         </section>
       </div>
+
+      <section className="card" aria-labelledby="h-tracking">
+        <div className="card-head">
+          <h2 id="h-tracking">Seguimiento de incumplimientos</h2>
+          <span className="muted small">
+            {overdue} {overdue === 1 ? 'vencido' : 'vencidos'} · {unassigned} sin responsable
+          </span>
+        </div>
+        {openIssues.length === 0 ? (
+          <p className="muted">No hay incumplimientos abiertos.</p>
+        ) : (
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Criterio</th>
+                  <th scope="col">Proyecto</th>
+                  <th scope="col">Responsable</th>
+                  <th scope="col">Fecha límite</th>
+                </tr>
+              </thead>
+              <tbody>
+                {openIssues.slice(0, 8).map((i) => {
+                  const status = dueStatus(i.due)
+                  return (
+                    <tr key={`${i.project.id}-${i.criterion.id}`}>
+                      <td>
+                        <span className="mono muted">{i.criterion.id}</span> {i.criterion.title}
+                      </td>
+                      <td>
+                        <button type="button" className="link-button" onClick={() => onOpenProject(i.project.id)}>
+                          {i.project.name}
+                        </button>
+                      </td>
+                      <td>{i.owner || <span className="muted">Sin asignar</span>}</td>
+                      <td>
+                        {status ? (
+                          <span className={`due due-${status.tone}`}>{status.label}</span>
+                        ) : (
+                          <span className="muted">Sin fecha</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            {openIssues.length > 8 && <p className="muted small">Y {openIssues.length - 8} más…</p>}
+          </div>
+        )}
+      </section>
 
       <section className="card" aria-labelledby="h-top">
         <h2 id="h-top">Problemas más frecuentes</h2>

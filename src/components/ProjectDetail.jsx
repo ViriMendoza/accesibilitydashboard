@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { PRINCIPLES, STATUSES, computeStats, criteriaFor } from '../data/criteria'
 import ScoreRing from './ScoreRing'
 import Scanner from './Scanner'
+import { downloadFile, slugify } from '../utils/download'
+import { dueStatus, formatDate } from '../utils/date'
 
 const FILTERS = [{ id: 'all', label: 'Todos' }, ...STATUSES]
 
-export default function ProjectDetail({ project, onBack, onUpdate, onDelete, announce }) {
+export default function ProjectDetail({ project, onBack, onUpdate, onDelete, announce, owners }) {
   const [filter, setFilter] = useState('all')
   const stats = computeStats(project)
   const criteria = criteriaFor(project)
@@ -16,14 +18,25 @@ export default function ProjectDetail({ project, onBack, onUpdate, onDelete, ann
     announce(`${criterion.id} ${criterion.title}: ${STATUSES.find((s) => s.id === status).label}`)
   }
 
+  function setIssue(criterionId, field, value) {
+    const issue = { owner: '', due: '', ...project.issues[criterionId], [field]: value }
+    onUpdate({ ...project, issues: { ...project.issues, [criterionId]: issue } })
+  }
+
   function exportReport() {
     const lines = [
       `# Reporte de accesibilidad: ${project.name}`,
       `Meta: WCAG 2.2 ${project.target} · Puntuación: ${stats.score}/100`,
       '',
       ...criteria.map((c) => {
-        const status = STATUSES.find((s) => s.id === (project.checks[c.id] ?? 'pending')).label
-        return `- [${status}] ${c.id} ${c.title} (${c.level})`
+        const current = project.checks[c.id] ?? 'pending'
+        const status = STATUSES.find((s) => s.id === current).label
+        const issue = project.issues[c.id]
+        const tracking =
+          current === 'fail'
+            ? ` · Responsable: ${issue?.owner || 'sin asignar'} · Fecha límite: ${issue?.due ? formatDate(issue.due) : 'sin fecha'}`
+            : ''
+        return `- [${status}] ${c.id} ${c.title} (${c.level})${tracking}`
       }),
       '',
       ...(scan
@@ -36,12 +49,7 @@ export default function ProjectDetail({ project, onBack, onUpdate, onDelete, ann
         : []),
       project.notes ? `## Notas\n${project.notes}` : '',
     ]
-    const blob = new Blob([lines.join('\n')], { type: 'text/markdown' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `a11y-${project.name.toLowerCase().replace(/\s+/g, '-')}.md`
-    link.click()
-    URL.revokeObjectURL(link.href)
+    downloadFile(`a11y-${slugify(project.name)}.md`, lines.join('\n'), 'text/markdown')
   }
 
   return (
@@ -116,6 +124,9 @@ export default function ProjectDetail({ project, onBack, onUpdate, onDelete, ann
                         </label>
                       ))}
                     </fieldset>
+                    {current === 'fail' && (
+                      <IssueFields criterion={c} issue={project.issues[c.id]} onChange={setIssue} />
+                    )}
                   </li>
                 )
               })}
@@ -123,6 +134,12 @@ export default function ProjectDetail({ project, onBack, onUpdate, onDelete, ann
           </section>
         )
       })}
+
+      <datalist id="owners-list">
+        {owners.map((o) => (
+          <option key={o} value={o} />
+        ))}
+      </datalist>
 
       <section className="card" aria-labelledby="h-notes">
         <h2 id="h-notes">Notas</h2>
@@ -137,5 +154,33 @@ export default function ProjectDetail({ project, onBack, onUpdate, onDelete, ann
         </label>
       </section>
     </>
+  )
+}
+
+function IssueFields({ criterion, issue, onChange }) {
+  const status = dueStatus(issue?.due)
+  return (
+    <div className="issue-fields">
+      <label className="field field-inline">
+        <span>Responsable</span>
+        <input
+          list="owners-list"
+          placeholder="Nombre"
+          value={issue?.owner ?? ''}
+          onChange={(e) => onChange(criterion.id, 'owner', e.target.value)}
+          aria-label={`Responsable de ${criterion.id} ${criterion.title}`}
+        />
+      </label>
+      <label className="field field-inline">
+        <span>Fecha límite</span>
+        <input
+          type="date"
+          value={issue?.due ?? ''}
+          onChange={(e) => onChange(criterion.id, 'due', e.target.value)}
+          aria-label={`Fecha límite de ${criterion.id} ${criterion.title}`}
+        />
+      </label>
+      {status && <span className={`due due-${status.tone}`}>{status.label}</span>}
+    </div>
   )
 }

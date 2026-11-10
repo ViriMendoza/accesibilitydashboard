@@ -4,21 +4,45 @@ import Overview from './components/Overview'
 import Projects from './components/Projects'
 import ProjectDetail from './components/ProjectDetail'
 import Tips from './components/Tips'
+import History from './components/History'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { SAMPLE_PROJECTS } from './data/sampleProjects'
+import { computeStats } from './data/criteria'
+import { today } from './utils/date'
 
-const TITLES = { overview: 'Resumen', projects: 'Proyectos', tips: 'Consejos' }
+const TITLES = { overview: 'Resumen', projects: 'Proyectos', history: 'Historial', tips: 'Consejos' }
 
 function parseHash() {
   const [view = 'overview', id] = window.location.hash.slice(1).split('/')
   return { view: view || 'overview', id }
 }
 
-const today = () => new Date().toISOString().slice(0, 10)
+function snapshot(project, date = today()) {
+  const { score, pass, fail, pending } = computeStats(project)
+  return { date, score, pass, fail, pending }
+}
+
+// Una foto por día: si ya existe la de hoy, se reemplaza.
+function withSnapshot(project) {
+  const history = (project.history ?? []).filter((h) => h.date !== today())
+  return { ...project, history: [...history, snapshot(project)] }
+}
+
+// Completa proyectos guardados antes de que existieran responsables e historial.
+function normalize(project) {
+  if (project.history && project.issues) return project
+  const sample = SAMPLE_PROJECTS.find((s) => s.id === project.id)
+  return {
+    ...project,
+    issues: project.issues ?? sample?.issues ?? {},
+    history: project.history ?? sample?.history ?? [snapshot(project, project.updatedAt ?? today())],
+  }
+}
 
 export default function App() {
   const [route, setRoute] = useState(parseHash)
-  const [projects, setProjects] = useLocalStorage('a11y-projects', SAMPLE_PROJECTS)
+  const [storedProjects, setProjects] = useLocalStorage('a11y-projects', SAMPLE_PROJECTS)
+  const projects = storedProjects.map(normalize)
   const [theme, setTheme] = useLocalStorage(
     'a11y-theme',
     window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
@@ -57,12 +81,12 @@ export default function App() {
 
   function createProject(data) {
     const id = `p-${Date.now()}`
-    setProjects([...projects, { id, ...data, notes: '', checks: {}, updatedAt: today() }])
+    setProjects([...projects, withSnapshot({ id, ...data, notes: '', checks: {}, issues: {}, history: [], updatedAt: today() })])
     navigate(`project/${id}`)
   }
 
   function updateProject(updated) {
-    setProjects(projects.map((p) => (p.id === updated.id ? { ...updated, updatedAt: today() } : p)))
+    setProjects(projects.map((p) => (p.id === updated.id ? withSnapshot({ ...updated, updatedAt: today() }) : p)))
   }
 
   function deleteProject(id) {
@@ -82,10 +106,13 @@ export default function App() {
         onUpdate={updateProject}
         onDelete={deleteProject}
         announce={setMessage}
+        owners={[...new Set(projects.flatMap((p) => Object.values(p.issues).map((i) => i.owner)).filter(Boolean))]}
       />
     )
   } else if (route.view === 'projects' || route.view === 'project') {
     content = <Projects projects={projects} onOpenProject={(id) => navigate(`project/${id}`)} onCreate={createProject} />
+  } else if (route.view === 'history') {
+    content = <History projects={projects} />
   } else if (route.view === 'tips') {
     content = <Tips />
   } else {

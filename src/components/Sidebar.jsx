@@ -1,6 +1,7 @@
 const NAV = [
   { id: 'overview', label: 'Resumen', icon: 'M3 12h4l3-8 4 16 3-8h4' },
   { id: 'projects', label: 'Proyectos', icon: 'M3 7h18M3 12h18M3 17h12' },
+  { id: 'history', label: 'Historial', icon: 'M3 3v18h18M7 15l4-4 3 3 5-6' },
   { id: 'tips', label: 'Consejos', icon: 'M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z' },
 ]
 
