@@ -42,7 +42,10 @@ Construido con React y Vite. El propio dashboard está hecho para ser accesible:
 ### Diseño
 - Interfaz minimalista con modo claro y oscuro.
 - Animaciones de llenado en anillos, barras y contadores, y entrada escalonada del contenido. Se desactivan si el sistema tiene activado "reducir movimiento".
-- Diseño responsive para celular.
+- Diseño responsive:
+  - **Escritorio** (> 900 px): barra lateral fija y contenido centrado hasta 1200 px.
+  - **Tablet y celular** (≤ 900 px): barra superior con **menú hamburguesa**. El panel se cierra con Escape, con un toque fuera o al elegir una sección, y mantiene el foco dentro mientras está abierto.
+  - **Teléfono** (≤ 640 px): tablas convertidas en tarjetas, botones a todo el ancho, filtros desplazables y estados del checklist en cuadrícula.
 
 ## Requisitos
 

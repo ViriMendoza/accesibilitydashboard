@@ -250,12 +250,12 @@ export default function History({ projects }) {
               <tbody>
                 {events.map((e, i) => (
                   <tr key={`${e.project.id}-${e.type}-${e.date}-${i}`}>
-                    <td className="tabular">{formatDate(e.date)}</td>
-                    <td>{e.project.name}</td>
-                    <td>
+                    <td data-label="Fecha" className="tabular">{formatDate(e.date)}</td>
+                    <td data-label="Proyecto">{e.project.name}</td>
+                    <td data-label="Tipo">
                       <span className="chip">{e.type === 'evaluation' ? 'Evaluación' : 'Escaneo'}</span>
                     </td>
-                    <td>
+                    <td data-label="Detalle">
                       {e.type === 'evaluation' ? (
                         <>
                           <strong>{e.score}</strong>/100 · {e.pass} cumple · {e.fail} no cumple · {e.pending} pendientes

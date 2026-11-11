@@ -126,16 +126,16 @@ export default function Overview({ projects, onOpenProject }) {
                   const status = dueStatus(i.due)
                   return (
                     <tr key={`${i.project.id}-${i.criterion.id}`}>
-                      <td>
+                      <td data-label="Criterio">
                         <span className="mono muted">{i.criterion.id}</span> {i.criterion.title}
                       </td>
-                      <td>
+                      <td data-label="Proyecto">
                         <button type="button" className="link-button" onClick={() => onOpenProject(i.project.id)}>
                           {i.project.name}
                         </button>
                       </td>
-                      <td>{i.owner || <span className="muted">Sin asignar</span>}</td>
-                      <td>
+                      <td data-label="Responsable">{i.owner || <span className="muted">Sin asignar</span>}</td>
+                      <td data-label="Fecha límite">
                         {status ? (
                           <span className={`due due-${status.tone}`}>{status.label}</span>
                         ) : (

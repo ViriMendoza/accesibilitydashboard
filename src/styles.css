@@ -109,9 +109,23 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .skip-link:focus { top: 1rem; }
 
 /* Layout */
-.layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+.layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; }
+
+/* Barra superior y fondo del menú: solo en móvil */
+.topbar, .scrim { display: none; }
+.icon-button {
+  display: inline-grid; place-items: center;
+  width: 44px; height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+}
+.icon-button:hover { background: var(--surface-2); }
+.icon-button.sidebar-close { display: none; }
 
 .sidebar {
+  grid-column: 1; grid-row: 1;
   position: sticky; top: 0;
   height: 100vh;
   display: flex; flex-direction: column; gap: 1.5rem;
@@ -119,6 +133,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   border-right: 1px solid var(--border);
   background: var(--surface);
 }
+.sidebar-head { display: flex; align-items: center; justify-content: space-between; }
 .brand { display: flex; align-items: center; gap: 0.6rem; padding: 0 0.5rem; }
 .brand-mark {
   display: grid; place-items: center;
@@ -151,12 +166,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .theme-toggle:hover { background: var(--surface-2); }
 
 .main {
+  grid-column: 2; grid-row: 1;
+  justify-self: center;
   width: 100%;
-  max-width: 1120px;
-  padding: 2.5rem 2.5rem 4rem;
+  max-width: 1200px;
+  padding: 2.5rem clamp(1.5rem, 3vw, 3rem) 4rem;
 }
 .main:focus { outline: none; }
-.view { display: grid; gap: 1.25rem; align-content: start; }
+.view { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; align-content: start; }
 
 /* Entrada escalonada: cada bloque aparece y sube ligeramente. */
 @keyframes rise {
@@ -271,7 +288,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .issue-title { display: grid; font-weight: 500; }
 
 /* Projects */
-.project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+.project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 1rem; }
 .project-card {
   display: grid; gap: 1rem;
   width: 100%;
@@ -456,7 +473,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .filters select:disabled { opacity: 0.55; }
 .kpi-grid-3 { grid-template-columns: repeat(3, 1fr); }
 
-.chart { position: relative; }
+.chart { position: relative; min-width: 0; overflow: hidden; }
 .chart-empty { padding: 3rem 0; text-align: center; }
 .chart-plot { position: relative; border-radius: 8px; }
 .chart svg { display: block; overflow: visible; }
@@ -499,7 +516,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* Tips */
 .tips-toolbar { display: grid; gap: 0.75rem; }
 .search input { max-width: 360px; }
-.tips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+.tips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); gap: 1rem; }
 .tip { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
 .tip-title { margin: 0.25rem 0 0; font-size: 1rem; }
 .tip p { color: var(--muted); }
@@ -515,25 +532,109 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 
 /* Responsive */
-@media (max-width: 960px) {
-  .kpi-grid, .kpi-grid-3 { grid-template-columns: repeat(2, 1fr); }
-  .grid-2 { grid-template-columns: 1fr; }
+
+/* Tablet: indicadores en dos columnas y tarjetas apiladas */
+@media (max-width: 1100px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: minmax(0, 1fr); }
 }
 
-@media (max-width: 720px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar {
-    position: static; height: auto;
-    flex-direction: row; flex-wrap: wrap; align-items: center;
-    padding: 0.75rem 1rem;
-    border-right: 0; border-bottom: 1px solid var(--border);
+/* Móvil y tablet vertical: menú hamburguesa */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .main { grid-column: 1; grid-row: auto; padding: 1.5rem 1.25rem 3rem; }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 20;
+    height: 60px;
+    padding: 0 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
   }
-  .brand-name { display: none; }
-  .nav-list { display: flex; }
-  .theme-toggle { margin: 0 0 0 auto; }
-  .main { padding: 1.5rem 1rem 3rem; }
-  .tips-grid, .project-grid { grid-template-columns: 1fr; }
-  .violation { grid-template-columns: 1fr; }
+  .topbar .brand { padding: 0; }
+
+  .scrim {
+    display: block;
+    position: fixed; inset: 0; z-index: 30;
+    background: rgb(0 0 0 / 0.45);
+    animation: fade-in 0.2s ease both;
+  }
+
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0; z-index: 40;
+    width: min(300px, 85vw);
+    height: 100dvh;
+    padding: 1rem;
+    border-right: 1px solid var(--border);
+    box-shadow: 8px 0 30px rgb(0 0 0 / 0.15);
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0.25s;
+  }
+  /* Al abrir se hace visible al instante (para poder enfocarlo); al cerrar se oculta tras la animación. */
+  .sidebar.is-open { transform: none; visibility: visible; transition: transform 0.25s ease, visibility 0s; }
+  .icon-button.sidebar-close { display: inline-grid; }
+  .nav-link { min-height: 48px; font-size: 1rem; }
+  .theme-toggle { min-height: 44px; }
+
+  .kpi-grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .kpi-grid-3 > :last-child { grid-column: 1 / -1; }
+}
+
+/* Teléfono */
+@media (max-width: 640px) {
+  h1 { font-size: 1.4rem; }
+  .main { padding: 1.25rem 1rem 3rem; }
+  .view { gap: 1rem; }
+  .card { padding: 1rem; }
+
+  .page-header { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
+  .header-actions .btn { flex: 1 1 0; }
+
+  .kpi-grid { gap: 0.75rem; }
+  .kpi-value { font-size: 1.55rem; }
+
+  /* Filtros de botones: una fila desplazable en lugar de varias líneas */
+  .segmented { flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .segmented button { flex-shrink: 0; }
+
+  .filters .field { flex: 1 1 140px; min-width: 0; }
+  .search input { max-width: none; }
+
+  .issue-list li { grid-template-columns: 3rem minmax(0, 1fr); }
+  .issue-list .chip { grid-column: 2; justify-self: start; }
+
+  .criterion { padding-left: 0.75rem; }
+  .criterion-text { flex-basis: 100%; }
+  .status-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; }
+  .status-option span { min-height: 36px; padding: 0.45rem 0.25rem; text-align: center; }
+  .field-inline { flex: 1 1 150px; }
+  .field-inline input { width: 100%; min-width: 0; }
+
+  .scan-form .btn { flex: 1 1 100%; }
+  .violation { grid-template-columns: minmax(0, 1fr); gap: 0.4rem; }
+  .violation-target { white-space: normal; word-break: break-all; }
+
+  .tips-grid, .project-grid { grid-template-columns: minmax(0, 1fr); }
+
+  /* Tablas como tarjetas: cada celda muestra su encabezado */
+  .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .table, .table tbody, .table tr, .table td { display: block; }
+  .table tr { padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+  .table tr:last-child { border-bottom: 0; }
+  .table td { position: relative; padding: 0.25rem 0 0.25rem 6.5rem; border: 0; }
+  .table td::before {
+    content: attr(data-label);
+    position: absolute; left: 0; top: 0.35rem;
+    width: 6rem;
+    color: var(--muted); font-size: 0.78rem; font-weight: 600;
+  }
+}
+
+/* Teléfonos angostos: estados del checklist en 2 × 2 */
+@media (max-width: 420px) {
+  .status-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (prefers-reduced-motion: reduce) {

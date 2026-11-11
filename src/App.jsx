@@ -48,6 +48,7 @@ export default function App() {
     window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
   )
   const [message, setMessage] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
   const mainRef = useRef(null)
   const firstRender = useRef(true)
 
@@ -60,6 +61,20 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme
   }, [theme])
+
+  // Con el menú móvil abierto, el resto de la página queda inerte y sin scroll.
+  useEffect(() => {
+    mainRef.current.inert = menuOpen
+    document.body.style.overflow = menuOpen ? 'hidden' : ''
+  }, [menuOpen])
+
+  // Si la pantalla crece a escritorio con el menú abierto, se cierra.
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 901px)')
+    const onChange = (e) => e.matches && setMenuOpen(false)
+    desktop.addEventListener('change', onChange)
+    return () => desktop.removeEventListener('change', onChange)
+  }, [])
 
   const project = route.view === 'project' ? projects.find((p) => p.id === route.id) : null
   const pageTitle = project ? project.name : TITLES[route.view] ?? 'Resumen'
@@ -128,6 +143,8 @@ export default function App() {
         view={route.view === 'project' ? 'projects' : route.view}
         theme={theme}
         onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
       />
       <main id="main" ref={mainRef} tabIndex={-1} className="main">
         {/* La key reinicia la animación de entrada en cada cambio de vista. */}

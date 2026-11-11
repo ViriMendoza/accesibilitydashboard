@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { formatDate } from '../utils/date'
 
-const HEIGHT = 260
 const Y_TICKS = [0, 25, 50, 75, 100]
 const toMs = (iso) => new Date(`${iso}T12:00:00`).getTime()
 
@@ -15,11 +14,11 @@ function pointAt(points, date) {
   return found
 }
 
-function xTicks(min, max) {
+function xTicks(min, max, count) {
   const span = max - min
   const options = span > 60 * 86_400_000 ? { month: 'short', year: '2-digit' } : { day: 'numeric', month: 'short' }
-  return Array.from({ length: 5 }, (_, i) => {
-    const ms = min + (span * i) / 4
+  return Array.from({ length: count }, (_, i) => {
+    const ms = min + (span * i) / (count - 1)
     return { ms, label: new Date(ms).toLocaleDateString('es-MX', options) }
   })
 }
@@ -53,6 +52,9 @@ function ChartBody({ series, width }) {
 
   // Etiquetas directas al final de cada línea solo con ≤ 4 series y espacio suficiente.
   const showLabels = series.length <= 4 && width > 520
+  const narrow = width < 480
+  const HEIGHT = narrow ? 220 : 260
+  const tickCount = narrow ? 3 : 5
   const m = { top: 16, right: showLabels ? 132 : 20, bottom: 30, left: 36 }
   const innerW = Math.max(width - m.left - m.right, 10)
   const innerH = HEIGHT - m.top - m.bottom
@@ -141,13 +143,13 @@ function ChartBody({ series, width }) {
               </text>
             </g>
           ))}
-          {xTicks(min, max).map((t, i) => (
+          {xTicks(min, max, tickCount).map((t, i) => (
             <text
               key={i}
               className="axis"
               x={m.left + ((t.ms - min) / (max - min)) * innerW}
               y={HEIGHT - 8}
-              textAnchor={i === 0 ? 'start' : i === 4 ? 'end' : 'middle'}
+              textAnchor={i === 0 ? 'start' : i === tickCount - 1 ? 'end' : 'middle'}
             >
               {t.label}
             </text>
